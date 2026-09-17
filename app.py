@@ -14,6 +14,10 @@ _DISPLAY_COLS = [
 def _reset_selection():
     st.session_state["selected_product"] = None
     st.session_state["selected_step"] = None
+
+
+def _close_dialog():
+    _reset_selection()
     st.session_state["df_version"] = st.session_state.get("df_version", 0) + 1
 
 
@@ -37,7 +41,7 @@ def _show_lot_dialog(product: str, step: str, lot_df: pd.DataFrame):
     st.dataframe(lot_styled, use_container_width=True, hide_index=True)
     st.caption(f"총 {len(display)}건 · Hold {(display['hold_yn'] == 'Y').sum()}건")
     if st.button("닫기"):
-        _reset_selection()
+        _close_dialog()
         st.rerun()
 
 
