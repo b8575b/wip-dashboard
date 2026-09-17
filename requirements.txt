@@ -1,6 +1,6 @@
 streamlit>=1.35.0
 supabase>=2.0.0
-pandas>=2.0.0
+pandas>=2.1.0
 plotly>=5.0.0
 flake8
 rich
