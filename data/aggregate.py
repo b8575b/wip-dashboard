@@ -1,8 +1,10 @@
+import streamlit as st
 import pandas as pd
 
 _REQUIRED = {"product_name", "step_name", "step_order", "quantity"}
 
 
+@st.cache_data
 def build_wip_matrix(df: pd.DataFrame) -> pd.DataFrame:
     if df.empty:
         return pd.DataFrame(index=pd.Index([], name="Product"))

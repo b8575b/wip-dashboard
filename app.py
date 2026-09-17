@@ -165,7 +165,10 @@ else:
 
 sel_prod = st.session_state.get("selected_product")
 sel_step = st.session_state.get("selected_step")
-if sel_prod is not None and sel_step is not None and not filtered_df.empty:
+if (sel_prod is not None and sel_step is not None
+        and not filtered_df.empty
+        and sel_prod in matrix.index
+        and sel_step in matrix.columns):
     lot_df = filtered_df[
         (filtered_df["product_name"] == sel_prod)
         & (filtered_df["step_name"] == sel_step)
