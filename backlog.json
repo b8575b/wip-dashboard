@@ -1,0 +1,354 @@
+{
+  "project": "WIP 재공 현황판",
+  "version": "1.0",
+  "created_at": "2026-09-17",
+  "updated_at": "2026-09-17",
+  "statuses": {
+    "todo": "할 일",
+    "in_progress": "작업중",
+    "review": "리뷰 필요",
+    "pending_decision": "사람의 판단이 필요",
+    "done": "완료",
+    "cancelled": "취소",
+    "waiting": "대기"
+  },
+  "tasks": [
+    {
+      "id": "TASK-001",
+      "title": "GitHub 리포지토리 및 프로젝트 기본 구조 생성",
+      "description": "GitHub 리포지토리를 생성하고 .gitignore, requirements.txt 초안, README.md를 작성한다. secrets.toml이 커밋되지 않도록 .gitignore를 설정한다.",
+      "doc": "tasks/TASK-001.md",
+      "status": "in_progress",
+      "priority": "high",
+      "estimated_minutes": 30,
+      "dependencies": [],
+      "tags": [
+        "setup",
+        "git"
+      ],
+      "assignee": "최준혁",
+      "created_at": "2026-09-17",
+      "updated_at": "2026-09-17",
+      "notes": ""
+    },
+    {
+      "id": "TASK-002",
+      "title": "Streamlit 기본 앱 구성 및 로컬 실행 확인",
+      "description": "app.py를 생성하고 페이지 제목, 레이아웃 설정 등 기본 골격을 구성한다. `streamlit run app.py`로 로컬에서 정상 실행되는지 확인한다.",
+      "doc": "tasks/TASK-002.md",
+      "status": "todo",
+      "priority": "high",
+      "estimated_minutes": 30,
+      "dependencies": [
+        "TASK-001"
+      ],
+      "tags": [
+        "setup",
+        "streamlit"
+      ],
+      "assignee": null,
+      "created_at": "2026-09-17",
+      "updated_at": "2026-09-17",
+      "notes": ""
+    },
+    {
+      "id": "TASK-003",
+      "title": "Supabase 프로젝트 생성 및 테이블 스키마 설계",
+      "description": "Supabase 콘솔에서 프로젝트를 생성하고 wip_inventory 테이블을 rawdata.csv 컬럼 구조에 맞게 정의한다. URL과 API Key를 확보한다.",
+      "doc": "tasks/TASK-003.md",
+      "status": "todo",
+      "priority": "high",
+      "estimated_minutes": 30,
+      "dependencies": [
+        "TASK-001"
+      ],
+      "tags": [
+        "supabase",
+        "database",
+        "setup"
+      ],
+      "assignee": null,
+      "created_at": "2026-09-17",
+      "updated_at": "2026-09-17",
+      "notes": ""
+    },
+    {
+      "id": "TASK-004",
+      "title": "CSV 데이터 Supabase에 적재",
+      "description": "sources/rawdata.csv를 읽어 Supabase wip_inventory 테이블에 일괄 insert한다. 적재 후 건수를 확인하여 누락 없이 업로드됐는지 검증한다.",
+      "doc": "tasks/TASK-004.md",
+      "status": "waiting",
+      "priority": "high",
+      "estimated_minutes": 30,
+      "dependencies": [
+        "TASK-003"
+      ],
+      "tags": [
+        "supabase",
+        "data",
+        "csv"
+      ],
+      "assignee": null,
+      "created_at": "2026-09-17",
+      "updated_at": "2026-09-17",
+      "notes": ""
+    },
+    {
+      "id": "TASK-005",
+      "title": "앱-Supabase 연결 설정 및 연결 테스트",
+      "description": ".streamlit/secrets.toml에 접속 정보를 설정하고, supabase-py 클라이언트를 초기화하는 모듈을 작성한다. 간단한 SELECT로 연결을 검증한다.",
+      "doc": "tasks/TASK-005.md",
+      "status": "waiting",
+      "priority": "high",
+      "estimated_minutes": 30,
+      "dependencies": [
+        "TASK-002",
+        "TASK-003"
+      ],
+      "tags": [
+        "supabase",
+        "streamlit",
+        "connection"
+      ],
+      "assignee": null,
+      "created_at": "2026-09-17",
+      "updated_at": "2026-09-17",
+      "notes": ""
+    },
+    {
+      "id": "TASK-006",
+      "title": "WIP 데이터 조회 모듈 작성",
+      "description": "Supabase에서 wip_inventory 전체 데이터를 조회하여 DataFrame으로 반환하는 함수를 작성한다. st.cache_data로 캐싱을 적용한다.",
+      "doc": "tasks/TASK-006.md",
+      "status": "waiting",
+      "priority": "high",
+      "estimated_minutes": 30,
+      "dependencies": [
+        "TASK-005",
+        "TASK-004"
+      ],
+      "tags": [
+        "data",
+        "supabase",
+        "pandas"
+      ],
+      "assignee": null,
+      "created_at": "2026-09-17",
+      "updated_at": "2026-09-17",
+      "notes": ""
+    },
+    {
+      "id": "TASK-007",
+      "title": "Product × STEP WIP 수량 집계 (Pandas pivot)",
+      "description": "조회한 DataFrame을 product_name × step_name 기준으로 quantity를 합산하여 Matrix용 pivot table을 생성하는 함수를 작성한다. step_order 기준으로 열을 정렬한다.",
+      "doc": "tasks/TASK-007.md",
+      "status": "waiting",
+      "priority": "high",
+      "estimated_minutes": 30,
+      "dependencies": [
+        "TASK-006"
+      ],
+      "tags": [
+        "data",
+        "pandas",
+        "aggregation"
+      ],
+      "assignee": null,
+      "created_at": "2026-09-17",
+      "updated_at": "2026-09-17",
+      "notes": ""
+    },
+    {
+      "id": "TASK-008",
+      "title": "WIP Matrix 화면 표시",
+      "description": "pivot table을 Streamlit에서 행=Product, 열=STEP, 셀=WIP 수량 형태의 Matrix로 표시한다. st.dataframe 또는 st.table을 활용하고 수량 0인 셀은 시각적으로 구분한다.",
+      "doc": "tasks/TASK-008.md",
+      "status": "waiting",
+      "priority": "high",
+      "estimated_minutes": 30,
+      "dependencies": [
+        "TASK-007"
+      ],
+      "tags": [
+        "streamlit",
+        "ui",
+        "matrix"
+      ],
+      "assignee": null,
+      "created_at": "2026-09-17",
+      "updated_at": "2026-09-17",
+      "notes": ""
+    },
+    {
+      "id": "TASK-009",
+      "title": "Matrix 셀 선택 UX 방식 결정",
+      "description": "Streamlit의 기술 제약상 셀 직접 클릭 또는 selectbox 방식 중 어느 것을 사용할지 결정해야 한다. 두 방식의 안정성과 사용자 경험을 검토하여 최종 방향을 확정한다.",
+      "doc": "tasks/TASK-009.md",
+      "status": "pending_decision",
+      "priority": "high",
+      "estimated_minutes": 30,
+      "dependencies": [
+        "TASK-008"
+      ],
+      "tags": [
+        "ux",
+        "decision",
+        "streamlit"
+      ],
+      "assignee": null,
+      "created_at": "2026-09-17",
+      "updated_at": "2026-09-17",
+      "notes": "st.dataframe의 on_select 이벤트(Streamlit 1.35+) 또는 selectbox 조합 중 선택 필요"
+    },
+    {
+      "id": "TASK-010",
+      "title": "Product + STEP 선택 처리 구현",
+      "description": "TASK-009에서 결정된 방식으로 사용자가 특정 Product와 STEP을 선택하는 UI를 구현한다. 선택값을 st.session_state에 저장하여 이후 상세 조회에 전달한다.",
+      "doc": "tasks/TASK-010.md",
+      "status": "waiting",
+      "priority": "high",
+      "estimated_minutes": 30,
+      "dependencies": [
+        "TASK-009"
+      ],
+      "tags": [
+        "streamlit",
+        "ui",
+        "selection"
+      ],
+      "assignee": null,
+      "created_at": "2026-09-17",
+      "updated_at": "2026-09-17",
+      "notes": ""
+    },
+    {
+      "id": "TASK-011",
+      "title": "선택된 조건의 Lot 상세정보 조회",
+      "description": "선택된 product_name + step_name 조건으로 Supabase에서 Lot 목록을 조회하는 함수를 작성한다. 반환 컬럼: lot_id, product_name, step_name, quantity, equipment, input_time, waiting_hours, status, hold_yn.",
+      "doc": "tasks/TASK-011.md",
+      "status": "waiting",
+      "priority": "high",
+      "estimated_minutes": 30,
+      "dependencies": [
+        "TASK-006",
+        "TASK-010"
+      ],
+      "tags": [
+        "data",
+        "supabase",
+        "lot"
+      ],
+      "assignee": null,
+      "created_at": "2026-09-17",
+      "updated_at": "2026-09-17",
+      "notes": ""
+    },
+    {
+      "id": "TASK-012",
+      "title": "Lot 상세 팝업(Dialog) 표시 구현",
+      "description": "TASK-011에서 조회한 Lot 목록을 st.dialog로 표시한다. 팝업 내에서 테이블 형태로 상세정보를 보여주고, Hold Lot은 시각적으로 강조한다.",
+      "doc": "tasks/TASK-012.md",
+      "status": "waiting",
+      "priority": "high",
+      "estimated_minutes": 30,
+      "dependencies": [
+        "TASK-011"
+      ],
+      "tags": [
+        "streamlit",
+        "ui",
+        "dialog",
+        "lot"
+      ],
+      "assignee": null,
+      "created_at": "2026-09-17",
+      "updated_at": "2026-09-17",
+      "notes": "st.dialog는 Streamlit 1.35+ 기능. 버전 확인 후 필요시 st.expander로 대체"
+    },
+    {
+      "id": "TASK-013",
+      "title": "Product / STEP 필터 구현",
+      "description": "사이드바 또는 상단에 Product 다중 선택, STEP 다중 선택 필터를 추가한다. 필터 변경 시 WIP Matrix와 집계 결과에 동일한 조건이 적용되어야 한다.",
+      "doc": "tasks/TASK-013.md",
+      "status": "todo",
+      "priority": "medium",
+      "estimated_minutes": 30,
+      "dependencies": [
+        "TASK-008"
+      ],
+      "tags": [
+        "streamlit",
+        "ui",
+        "filter"
+      ],
+      "assignee": null,
+      "created_at": "2026-09-17",
+      "updated_at": "2026-09-17",
+      "notes": ""
+    },
+    {
+      "id": "TASK-014",
+      "title": "Status / Hold 필터 구현",
+      "description": "Status(RUN/WAIT/HOLD) 선택 필터와 Hold Lot만 보기 토글을 추가한다. TASK-013의 Product/STEP 필터와 함께 복합 조건으로 동작해야 한다.",
+      "doc": "tasks/TASK-014.md",
+      "status": "todo",
+      "priority": "medium",
+      "estimated_minutes": 30,
+      "dependencies": [
+        "TASK-013"
+      ],
+      "tags": [
+        "streamlit",
+        "ui",
+        "filter"
+      ],
+      "assignee": null,
+      "created_at": "2026-09-17",
+      "updated_at": "2026-09-17",
+      "notes": ""
+    },
+    {
+      "id": "TASK-015",
+      "title": "UI 정리 및 업무용 Dashboard 스타일 적용",
+      "description": "전체 레이아웃을 정리하고 컬러 테마, 폰트, 여백을 업무용 Dashboard에 맞게 조정한다. 핵심 정보가 화면 상단에 오도록 레이아웃을 최종 확정한다.",
+      "doc": "tasks/TASK-015.md",
+      "status": "todo",
+      "priority": "low",
+      "estimated_minutes": 30,
+      "dependencies": [
+        "TASK-012",
+        "TASK-014"
+      ],
+      "tags": [
+        "ui",
+        "design",
+        "streamlit"
+      ],
+      "assignee": null,
+      "created_at": "2026-09-17",
+      "updated_at": "2026-09-17",
+      "notes": ""
+    },
+    {
+      "id": "TASK-016",
+      "title": "Streamlit Community Cloud 배포 및 검증",
+      "description": "GitHub 리포지토리를 Streamlit Community Cloud에 연결하고 Supabase Secrets를 설정하여 배포한다. 배포된 URL에서 WIP Matrix 조회 → 셀 선택 → Lot 상세 팝업 흐름을 직접 확인한다.",
+      "doc": "tasks/TASK-016.md",
+      "status": "waiting",
+      "priority": "high",
+      "estimated_minutes": 30,
+      "dependencies": [
+        "TASK-015"
+      ],
+      "tags": [
+        "deployment",
+        "streamlit-cloud",
+        "verification"
+      ],
+      "assignee": null,
+      "created_at": "2026-09-17",
+      "updated_at": "2026-09-17",
+      "notes": ""
+    }
+  ]
+}

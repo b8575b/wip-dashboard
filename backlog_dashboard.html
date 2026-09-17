@@ -1,0 +1,703 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Backlog Dashboard</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Malgun Gothic','Apple SD Gothic Neo',sans-serif;background:#0f1117;color:#e0e0e0;font-size:14px;line-height:1.5}
+a{color:inherit;text-decoration:none}
+button{cursor:pointer;font-family:inherit;font-size:13px}
+
+/* ── 상단 툴바 ── */
+#toolbar{display:flex;align-items:center;gap:10px;padding:10px 16px;background:#1a1d27;border-bottom:1px solid #2a2d3a;flex-wrap:wrap}
+#toolbar h1{font-size:15px;font-weight:700;color:#c9a96e;white-space:nowrap}
+#file-info{font-size:12px;color:#7a7d8a;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.btn{padding:5px 11px;border-radius:5px;border:1px solid #3a3d4a;background:#252836;color:#d0d2da;transition:.15s}
+.btn:hover{background:#2e3247;border-color:#5a5d6a}
+.btn.primary{border-color:#4a6fa5;background:#1e3050;color:#7ab5e8}
+.btn.primary:hover{background:#253c63}
+
+/* ── 통계 바 ── */
+#stats-bar{display:flex;gap:8px;padding:9px 16px;background:#141720;border-bottom:1px solid #2a2d3a;flex-wrap:wrap;align-items:center}
+.stat-badge{display:inline-flex;align-items:center;gap:4px;padding:3px 9px;border-radius:12px;font-size:12px;font-weight:600;cursor:pointer;border:1px solid transparent;transition:.15s}
+.stat-badge:hover{filter:brightness(1.2)}
+.stat-badge.active{border-color:currentColor}
+.stat-all{background:#2a2d3a;color:#b0b3c0}
+.stat-todo{background:#1e2535;color:#7ab5e8}
+.stat-in_progress{background:#2a2000;color:#f0b429}
+.stat-review{background:#002a2a;color:#4ecdc4}
+.stat-pending_decision{background:#2a0d2a;color:#c084f5}
+.stat-waiting{background:#1a2040;color:#6b8ccc}
+.stat-done{background:#002a10;color:#4ade80}
+.stat-cancelled{background:#1e1e1e;color:#6b6b6b}
+#total-note{font-size:11px;color:#5a5d6a;margin-left:4px}
+
+/* ── 필터 행 ── */
+#filter-row{display:flex;gap:8px;padding:9px 16px;background:#141720;border-bottom:1px solid #2a2d3a;flex-wrap:wrap}
+#search{flex:1;min-width:180px;padding:5px 10px;border-radius:5px;border:1px solid #3a3d4a;background:#1a1d27;color:#e0e0e0;font-family:inherit;font-size:13px}
+#search::placeholder{color:#4a4d5a}
+#search:focus{outline:none;border-color:#4a6fa5}
+
+/* ── 본문 분할 ── */
+#main{display:flex;height:calc(100vh - 130px);overflow:hidden}
+
+/* ── 목록 패널 ── */
+#list-panel{width:340px;min-width:220px;border-right:1px solid #2a2d3a;overflow-y:auto;flex-shrink:0}
+#list-panel::-webkit-scrollbar{width:4px}
+#list-panel::-webkit-scrollbar-thumb{background:#3a3d4a;border-radius:2px}
+.task-row{padding:9px 14px;border-bottom:1px solid #1e2130;cursor:pointer;transition:.1s;display:flex;gap:8px;align-items:flex-start}
+.task-row:hover{background:#1e2130}
+.task-row.selected{background:#1e2d4a;border-left:3px solid #4a6fa5}
+.task-row.selected .task-id{color:#7ab5e8}
+.task-id{font-size:11px;color:#5a7a9a;white-space:nowrap;padding-top:1px;min-width:64px}
+.task-title-cell{flex:1;min-width:0}
+.task-title-text{font-size:13px;color:#d0d2da;line-height:1.35;word-break:keep-all}
+.task-meta{display:flex;gap:5px;margin-top:3px;flex-wrap:wrap}
+.tag-status{font-size:10px;padding:1px 6px;border-radius:8px;font-weight:600}
+.tag-priority{font-size:10px;color:#5a5d6a}
+
+/* ── 상세 패널 ── */
+#detail-panel{flex:1;overflow-y:auto;padding:18px;min-width:0}
+#detail-panel::-webkit-scrollbar{width:4px}
+#detail-panel::-webkit-scrollbar-thumb{background:#3a3d4a;border-radius:2px}
+#detail-placeholder{display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;color:#3a3d4a;gap:8px}
+#detail-placeholder svg{opacity:.3}
+
+/* ── 상세 내용 ── */
+.detail-header{display:flex;align-items:flex-start;gap:12px;margin-bottom:16px;padding-bottom:12px;border-bottom:1px solid #2a2d3a}
+.detail-id{font-size:12px;color:#5a7a9a;white-space:nowrap;padding-top:3px}
+.detail-title{font-size:17px;font-weight:700;color:#e8e0f0;line-height:1.3;flex:1}
+.detail-badges{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px}
+.section{margin-bottom:16px}
+.section-label{font-size:11px;font-weight:700;color:#5a5d6a;text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px}
+.field-grid{display:grid;grid-template-columns:110px 1fr;gap:3px 10px;align-items:baseline}
+.field-label{font-size:12px;color:#5a5d6a;padding:2px 0}
+.field-value{font-size:13px;color:#c0c3d0;padding:2px 0;word-break:break-word}
+.field-value.missing{color:#3a3d4a;font-style:italic}
+.field-value.error{color:#f87171}
+.dep-ref{display:inline-flex;align-items:center;gap:4px;margin:1px 2px;padding:1px 7px;border-radius:10px;background:#1e2535;font-size:12px;cursor:pointer;border:1px solid transparent;transition:.1s}
+.dep-ref:hover{border-color:#4a6fa5}
+.dep-ref.broken{background:#2a1010;color:#f87171;cursor:default}
+.dep-ref.broken::after{content:" ⚠";font-size:10px}
+.log-entry{background:#1a1d27;border-radius:4px;padding:6px 10px;margin-bottom:4px;border-left:2px solid #3a3d4a;font-size:12px}
+.log-time{color:#5a5d6a;font-size:11px;margin-bottom:2px}
+.log-body{color:#b0b3c0;white-space:pre-wrap;word-break:break-word}
+.desc-block{background:#1a1d27;border-radius:5px;padding:10px 12px;font-size:13px;color:#b8bcc8;white-space:pre-wrap;word-break:break-word;border:1px solid #2a2d3a}
+.gate-block{background:#1c1400;border-radius:5px;padding:8px 12px;font-size:12px;color:#b8950a;font-family:'Consolas','Courier New',monospace;white-space:pre-wrap;word-break:break-word;border:1px solid #3a2800}
+.gate-note{font-size:11px;color:#5a5d6a;margin-top:3px}
+
+/* ── MD 탭 ── */
+.tabs{display:flex;gap:0;border-bottom:1px solid #2a2d3a;margin-bottom:14px}
+.tab{padding:6px 14px;font-size:13px;cursor:pointer;border-bottom:2px solid transparent;color:#5a5d6a;transition:.1s}
+.tab.active{color:#7ab5e8;border-bottom-color:#4a6fa5}
+.tab:hover:not(.active){color:#9098b0}
+.md-content{background:#1a1d27;border-radius:5px;padding:14px;border:1px solid #2a2d3a;font-size:13px;color:#b8bcc8;line-height:1.7;overflow-x:auto}
+.md-content h1,.md-content h2,.md-content h3{color:#d0d2da;margin:12px 0 6px}
+.md-content h1{font-size:16px;border-bottom:1px solid #2a2d3a;padding-bottom:4px}
+.md-content h2{font-size:14px}
+.md-content h3{font-size:13px;color:#a0a3b0}
+.md-content code{background:#252836;padding:1px 5px;border-radius:3px;font-family:'Consolas','Courier New',monospace;font-size:12px}
+.md-content pre{background:#252836;padding:10px;border-radius:4px;overflow-x:auto;margin:6px 0}
+.md-content pre code{background:none;padding:0}
+.md-content ul,.md-content ol{padding-left:20px;margin:4px 0}
+.md-content li{margin:2px 0}
+.md-content table{border-collapse:collapse;width:100%;margin:6px 0}
+.md-content th,.md-content td{border:1px solid #2a2d3a;padding:4px 8px;text-align:left}
+.md-content th{background:#252836}
+.md-content blockquote{border-left:3px solid #3a3d4a;padding-left:10px;color:#7a7d8a;margin:4px 0}
+.md-no-file{color:#3a3d4a;font-style:italic;font-size:13px;padding:10px 0}
+.reload-hint{font-size:12px;color:#5a5d6a;margin-top:6px}
+
+/* ── 빈 화면 / 오류 ── */
+#landing{display:flex;flex-direction:column;align-items:center;justify-content:center;height:calc(100vh - 50px);gap:16px;text-align:center;padding:20px}
+#landing h2{font-size:18px;color:#8090a8}
+#landing p{font-size:13px;color:#4a4d5a;max-width:380px}
+.error-box{background:#1e0a0a;border:1px solid #5a1a1a;border-radius:6px;padding:12px 16px;color:#f87171;font-size:13px;white-space:pre-wrap;font-family:'Consolas',monospace}
+.warn-box{background:#1e1800;border:1px solid #5a4a00;border-radius:6px;padding:10px 14px;color:#f0b429;font-size:12px}
+</style>
+</head>
+<body>
+
+<!-- 상단 툴바 -->
+<div id="toolbar">
+  <h1>Backlog Dashboard</h1>
+  <span id="file-info">파일을 불러오세요</span>
+  <button class="btn primary" onclick="document.getElementById('json-input').click()">JSON 선택</button>
+  <button class="btn" onclick="document.getElementById('md-input').click()" title="tasks/ 폴더의 .md 파일들을 선택하세요">MD 파일 선택</button>
+  <button class="btn" id="reload-btn" onclick="reloadJson()" style="display:none">새로 읽기</button>
+  <input type="file" id="json-input" accept=".json" style="display:none" onchange="onJsonSelected(this)">
+  <input type="file" id="md-input" accept=".md" multiple style="display:none" onchange="onMdSelected(this)">
+</div>
+
+<!-- 통계 바 (JSON 로드 후 표시) -->
+<div id="stats-bar" style="display:none">
+  <div id="badges"></div>
+  <span id="total-note"></span>
+</div>
+
+<!-- 필터 행 -->
+<div id="filter-row" style="display:none">
+  <input type="text" id="search" placeholder="ID · 제목 · 설명 검색" oninput="renderList()" autocomplete="off" spellcheck="false">
+</div>
+
+<!-- 본문 -->
+<div id="main" style="display:none">
+  <div id="list-panel"></div>
+  <div id="detail-panel">
+    <div id="detail-placeholder">
+      <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#5a5d6a" stroke-width="1.5">
+        <rect x="3" y="3" width="18" height="18" rx="2"/><line x1="9" y1="9" x2="15" y2="9"/>
+        <line x1="9" y1="12" x2="15" y2="12"/><line x1="9" y1="15" x2="12" y2="15"/>
+      </svg>
+      <span>목록에서 태스크를 선택하세요</span>
+    </div>
+  </div>
+</div>
+
+<!-- 랜딩 화면 -->
+<div id="landing">
+  <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="#3a4a6a" stroke-width="1.2">
+    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+    <polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/>
+    <line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/>
+  </svg>
+  <h2>Backlog Dashboard</h2>
+  <p>상단 <strong>JSON 선택</strong> 버튼으로 <code>backlog.json</code> 파일을 불러오세요.<br>
+     tasks/ 폴더의 .md 파일은 선택적으로 로드할 수 있습니다.</p>
+  <button class="btn primary" style="padding:8px 20px;font-size:14px" onclick="document.getElementById('json-input').click()">backlog.json 열기</button>
+</div>
+
+<script>
+// ── 상태 ──────────────────────────────────────────────────────────────────────
+const S = {
+  data: null,
+  taskMap: {},       // id → task
+  taskIds: new Set(),
+  mdMap: {},         // "TASK-001" → md text
+  selectedId: null,
+  filterStatus: '',
+  jsonFile: null,    // File 객체 (새로 읽기용)
+  activeTab: 'detail',
+};
+
+const STATUS_LABEL = {
+  todo: '할 일', in_progress: '작업중', review: '리뷰 필요',
+  pending_decision: '판단 필요', done: '완료', cancelled: '취소', waiting: '대기',
+};
+const STATUS_ICON = {
+  todo: '[ ]', in_progress: '[>]', review: '[?]',
+  pending_decision: '[!]', done: '[v]', cancelled: '[x]', waiting: '[-]',
+};
+const PRIORITY_COLOR = { high: '#f87171', medium: '#f0b429', low: '#4ade80' };
+
+// ── HTML 이스케이프 (XSS 방지) ─────────────────────────────────────────────
+function esc(v) {
+  if (v === null || v === undefined) return '';
+  return String(v)
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+    .replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+}
+
+// ── 필드 표시 헬퍼 ─────────────────────────────────────────────────────────
+function fv(val, fallback) {
+  if (val === null || val === undefined || val === '') return fallback || '미지정';
+  return esc(String(val));
+}
+
+function fvSpan(val, fallback) {
+  const missing = (val === null || val === undefined || val === '');
+  const text = missing ? (fallback || '미지정') : esc(String(val));
+  return `<span class="field-value${missing ? ' missing' : ''}">${text}</span>`;
+}
+
+// ── JSON 파일 선택 ─────────────────────────────────────────────────────────
+function onJsonSelected(input) {
+  const file = input.files[0];
+  if (!file) return;
+  S.jsonFile = file;
+  readJsonFile(file);
+  input.value = '';
+}
+
+function readJsonFile(file) {
+  const reader = new FileReader();
+  reader.onload = (e) => parseBacklog(e.target.result, file);
+  reader.onerror = () => showError('파일 읽기 오류가 발생했습니다.');
+  reader.readAsText(file, 'utf-8');
+}
+
+function reloadJson() {
+  if (S.jsonFile) readJsonFile(S.jsonFile);
+}
+
+// ── MD 파일 선택 ─────────────────────────────────────────────────────────
+function onMdSelected(input) {
+  const files = Array.from(input.files);
+  let loaded = 0;
+  S.mdMap = {};
+  files.forEach(f => {
+    const m = f.name.match(/^(TASK-\d+)\.md$/i);
+    if (!m) return;
+    const key = m[1].toUpperCase();
+    const r = new FileReader();
+    r.onload = (e) => {
+      S.mdMap[key] = e.target.result;
+      loaded++;
+      if (loaded === files.filter(f2 => /^TASK-\d+\.md$/i.test(f2.name)).length) {
+        // 현재 선택된 태스크 다시 렌더링
+        if (S.selectedId) renderDetail(S.selectedId);
+      }
+    };
+    r.readAsText(f, 'utf-8');
+  });
+  input.value = '';
+}
+
+// ── JSON 파싱 & 검증 ────────────────────────────────────────────────────────
+function parseBacklog(text, file) {
+  let data;
+  try { data = JSON.parse(text); }
+  catch (err) {
+    showError(`JSON 파싱 오류:\n${err.message}\n\n파일이 올바른 JSON 형식인지 확인하세요.`);
+    return;
+  }
+
+  if (!data || typeof data !== 'object' || !Array.isArray(data.tasks)) {
+    showError('"tasks" 배열이 없습니다. backlog.json 형식이 올바른지 확인하세요.');
+    return;
+  }
+
+  S.data = data;
+  S.taskMap = {};
+  S.taskIds = new Set();
+  data.tasks.forEach(t => {
+    if (t.id) { S.taskMap[t.id] = t; S.taskIds.add(t.id); }
+  });
+
+  const ts = new Date(file.lastModified);
+  const tsStr = `${ts.getFullYear()}-${p2(ts.getMonth()+1)}-${p2(ts.getDate())} `
+              + `${p2(ts.getHours())}:${p2(ts.getMinutes())}`;
+
+  document.getElementById('file-info').textContent = `${file.name}  ·  갱신: ${tsStr}`;
+  document.getElementById('reload-btn').style.display = '';
+  document.getElementById('landing').style.display = 'none';
+  document.getElementById('stats-bar').style.display = 'flex';
+  document.getElementById('filter-row').style.display = 'flex';
+  document.getElementById('main').style.display = 'flex';
+
+  S.selectedId = null;
+  S.filterStatus = '';
+  document.getElementById('search').value = '';
+
+  renderStats();
+  renderList();
+  document.getElementById('detail-panel').innerHTML =
+    `<div id="detail-placeholder" style="display:flex;flex-direction:column;`
+    + `align-items:center;justify-content:center;height:100%;color:#3a3d4a;gap:8px">`
+    + `<span>목록에서 태스크를 선택하세요</span></div>`;
+}
+
+function p2(n) { return String(n).padStart(2,'0'); }
+
+function showError(msg) {
+  document.getElementById('landing').innerHTML =
+    `<div style="max-width:500px;width:100%;padding:20px">
+      <div class="error-box">${esc(msg)}</div>
+      <button class="btn primary" style="margin-top:12px"
+        onclick="document.getElementById('json-input').click()">다시 선택</button>
+    </div>`;
+}
+
+// ── 통계 배지 ───────────────────────────────────────────────────────────────
+function renderStats() {
+  const tasks = S.data.tasks;
+  const counts = {};
+  tasks.forEach(t => { counts[t.status] = (counts[t.status] || 0) + 1; });
+
+  // 전체(all) + 각 상태
+  const knownStatuses = Object.keys(STATUS_LABEL);
+  const unknownStatuses = Object.keys(counts).filter(s => !STATUS_LABEL[s]);
+
+  let html = `<span class="stat-badge stat-all ${S.filterStatus===''?'active':''}"
+    onclick="setFilter('')">전체 ${tasks.length}</span>`;
+
+  knownStatuses.forEach(s => {
+    if (!counts[s]) return;
+    const icon = STATUS_ICON[s] || '';
+    html += `<span class="stat-badge stat-${s} ${S.filterStatus===s?'active':''}"
+      onclick="setFilter('${s}')">${icon} ${STATUS_LABEL[s]} ${counts[s]}</span>`;
+  });
+  unknownStatuses.forEach(s => {
+    html += `<span class="stat-badge" style="background:#2a1010;color:#f87171"
+      onclick="setFilter('${esc(s)}')">[?] ${esc(s)} ${counts[s]}</span>`;
+  });
+
+  document.getElementById('badges').innerHTML = html;
+
+  // 전체 항목 수 vs 리프 태스크 수
+  const parentIds = new Set(tasks.map(t => t.parent).filter(Boolean));
+  const leafCount = tasks.filter(t => !parentIds.has(t.id)).length;
+  const totalCount = tasks.length;
+  let note = `총 ${totalCount}건`;
+  if (leafCount < totalCount) {
+    note += ` (상위 포함) · 실행 작업 ${leafCount}건 (하위 없는 항목)`;
+  }
+  document.getElementById('total-note').textContent = note;
+}
+
+function setFilter(status) {
+  S.filterStatus = status;
+  renderStats();
+  renderList();
+}
+
+// ── 태스크 목록 ─────────────────────────────────────────────────────────────
+function renderList() {
+  const q = document.getElementById('search').value.trim().toLowerCase();
+  let tasks = S.data.tasks;
+
+  if (S.filterStatus) tasks = tasks.filter(t => t.status === S.filterStatus);
+  if (q) tasks = tasks.filter(t =>
+    (t.id||'').toLowerCase().includes(q) ||
+    (t.title||'').toLowerCase().includes(q) ||
+    (t.description||'').toLowerCase().includes(q)
+  );
+
+  const panel = document.getElementById('list-panel');
+  if (!S.data.tasks.length) {
+    panel.innerHTML = `<div style="padding:20px;color:#5a5d6a;text-align:center">
+      태스크가 없습니다. backlog.json의 tasks 배열이 비어 있습니다.</div>`;
+    return;
+  }
+  if (!tasks.length) {
+    panel.innerHTML = `<div style="padding:20px;color:#5a5d6a;text-align:center">
+      조건에 맞는 태스크가 없습니다.</div>`;
+    return;
+  }
+
+  let html = '';
+  tasks.forEach(t => {
+    const s = t.status || 'todo';
+    const icon = STATUS_ICON[s] || '[?]';
+    const label = STATUS_LABEL[s] || esc(s);
+    const priColor = PRIORITY_COLOR[t.priority] || '#7a7d8a';
+    const isSelected = t.id === S.selectedId;
+
+    html += `<div class="task-row${isSelected?' selected':''}" onclick="selectTask('${esc(t.id)}')">
+      <span class="task-id">${esc(t.id)}</span>
+      <div class="task-title-cell">
+        <div class="task-title-text">${esc(t.title || '(제목 없음)')}</div>
+        <div class="task-meta">
+          <span class="tag-status stat-${s}" style="background:none;border:1px solid currentColor">
+            ${icon} ${label}</span>
+          <span class="tag-priority" style="color:${priColor}">${esc(t.priority||'')}</span>
+        </div>
+      </div>
+    </div>`;
+  });
+  panel.innerHTML = html;
+}
+
+// ── 태스크 선택 ─────────────────────────────────────────────────────────────
+function selectTask(id) {
+  S.selectedId = id;
+  S.activeTab = 'detail';
+  renderList();
+  renderDetail(id);
+}
+
+// ── 태스크 상세 ─────────────────────────────────────────────────────────────
+function renderDetail(id) {
+  const t = S.taskMap[id];
+  if (!t) return;
+
+  const s = t.status || '';
+  const sLabel = STATUS_LABEL[s] || esc(s) + ' (알 수 없는 상태)';
+  const sIcon = STATUS_ICON[s] || '[?]';
+  const priColor = PRIORITY_COLOR[t.priority] || '#7a7d8a';
+  const hasMd = !!S.mdMap[id];
+
+  // deps 참조 검증
+  const deps = t.dependencies || t.deps || [];
+  let depsHtml = '';
+  if (!deps.length) {
+    depsHtml = `<span class="field-value missing">없음</span>`;
+  } else {
+    depsHtml = deps.map(d => {
+      const exists = S.taskIds.has(d);
+      return `<span class="dep-ref${exists?'':' broken'}" title="${exists?'':'참조 오류: 존재하지 않는 태스크'}"
+        ${exists?`onclick="selectTask('${esc(d)}')"`:''}>
+        ${esc(d)}${exists ? ` <span style="color:#5a5d6a;font-size:10px">${esc(STATUS_ICON[S.taskMap[d]?.status]||'')}</span>` : ''}
+      </span>`;
+    }).join(' ');
+  }
+
+  // parent 검증
+  const parent = t.parent;
+  let parentHtml = '';
+  if (!parent) {
+    parentHtml = `<span class="field-value missing">없음</span>`;
+  } else if (!S.taskIds.has(parent)) {
+    parentHtml = `<span class="field-value error">⚠ ${esc(parent)} (존재하지 않음)</span>`;
+  } else {
+    const pt = S.taskMap[parent];
+    parentHtml = `<span class="dep-ref" onclick="selectTask('${esc(parent)}')">${esc(parent)}
+      <span style="color:#5a5d6a;font-size:10px">${esc(pt?.title||'')}</span></span>`;
+  }
+
+  // log 렌더링 (배열 구조 보존)
+  const log = t.log;
+  let logHtml = '';
+  if (!log || (Array.isArray(log) && !log.length)) {
+    logHtml = `<span class="field-value missing">기록 없음</span>`;
+  } else if (Array.isArray(log)) {
+    logHtml = log.map(entry => {
+      if (typeof entry === 'string') {
+        return `<div class="log-entry"><div class="log-body">${esc(entry)}</div></div>`;
+      }
+      const time = entry.at || entry.time || entry.timestamp || entry.date || '';
+      const msg = entry.message || entry.msg || entry.text || entry.note
+                || entry.body || JSON.stringify(entry);
+      return `<div class="log-entry">
+        ${time ? `<div class="log-time">${esc(time)}</div>` : ''}
+        <div class="log-body">${esc(typeof msg==='string'?msg:JSON.stringify(msg))}</div>
+      </div>`;
+    }).join('');
+  } else {
+    logHtml = `<div class="log-entry"><div class="log-body">${esc(JSON.stringify(log,null,2))}</div></div>`;
+  }
+
+  // gate (표시만, 절대 실행 안 함)
+  const gate = t.gate;
+  let gateHtml = '';
+  if (!gate) {
+    gateHtml = `<span class="field-value missing">미지정</span>`;
+  } else {
+    const gateText = typeof gate === 'string' ? gate : JSON.stringify(gate, null, 2);
+    gateHtml = `<div class="gate-block">${esc(gateText)}</div>
+      <div class="gate-note">표시 전용 — 실행되지 않습니다</div>`;
+  }
+
+  // 탭 구성
+  const tabDetail = S.activeTab === 'detail';
+  const tabMd = S.activeTab === 'md';
+
+  // done_at / evidence (실제 있을 때만)
+  const doneAtSection = (t.done_at)
+    ? `<div class="field-label">완료 일시</div><div class="field-value">${esc(t.done_at)}</div>` : '';
+  const evidenceSection = (t.evidence)
+    ? `<div class="field-label">Evidence</div>${fvSpan(t.evidence)}` : '';
+
+  const html = `
+    <div class="tabs">
+      <div class="tab${tabDetail?' active':''}" onclick="switchTab('detail')">상세 정보</div>
+      <div class="tab${tabMd?' active':''}" onclick="switchTab('md')"
+        title="${hasMd?'MD 파일 로드됨':'MD 파일 미로드'}">
+        작업 문서${hasMd?' ✓':''}
+      </div>
+    </div>
+
+    ${tabDetail ? renderDetailContent(t, s, sLabel, sIcon, priColor,
+        depsHtml, parentHtml, logHtml, gateHtml, doneAtSection, evidenceSection) : ''}
+    ${tabMd ? renderMdContent(id, t) : ''}
+  `;
+  document.getElementById('detail-panel').innerHTML = html;
+}
+
+function renderDetailContent(t, s, sLabel, sIcon, priColor,
+    depsHtml, parentHtml, logHtml, gateHtml, doneAtSection, evidenceSection) {
+  const unknownStatus = !STATUS_LABEL[t.status];
+  return `
+    <div class="detail-header">
+      <span class="detail-id">${esc(t.id)}</span>
+      <div style="flex:1">
+        <div class="detail-title">${esc(t.title || '(제목 없음)')}</div>
+        <div class="detail-badges">
+          <span class="tag-status stat-${esc(s)}"
+            style="background:none;border:1px solid currentColor;padding:2px 8px;border-radius:10px;font-size:12px">
+            ${esc(sIcon)} ${esc(sLabel)}${unknownStatus?' ⚠':''}
+          </span>
+          <span style="font-size:12px;color:${priColor}">${esc(t.priority||'미지정')}</span>
+          ${(t.tags||[]).map(tg=>`<span style="font-size:11px;color:#5a5d6a;background:#1e2130;
+            padding:1px 6px;border-radius:8px">${esc(tg)}</span>`).join('')}
+        </div>
+      </div>
+    </div>
+
+    ${unknownStatus ? `<div class="warn-box" style="margin-bottom:12px">
+      ⚠ 알 수 없는 상태: "${esc(t.status)}" — backlog.json을 확인하세요</div>` : ''}
+
+    <div class="section">
+      <div class="section-label">설명 / 요약</div>
+      ${t.description || t.summary
+        ? `<div class="desc-block">${esc(t.description||t.summary)}</div>`
+        : `<span class="field-value missing">정보 없음</span>`}
+    </div>
+
+    <div class="section">
+      <div class="section-label">기본 정보</div>
+      <div class="field-grid">
+        <div class="field-label">완료 조건</div>${fvSpan(t.done_when)}
+        <div class="field-label">담당자</div>${fvSpan(t.owner || t.assignee)}
+        <div class="field-label">예상 시간</div>${fvSpan(
+          t.est_min != null ? t.est_min + '분'
+          : t.estimated_minutes != null ? t.estimated_minutes + '분'
+          : null)}
+        <div class="field-label">위치/Where</div>${fvSpan(t.where)}
+        <div class="field-label">문서 경로</div>${fvSpan(t.doc)}
+        <div class="field-label">생성일</div>${fvSpan(t.created_at)}
+        <div class="field-label">수정일</div>${fvSpan(t.updated_at)}
+        <div class="field-label">착수 일시</div>${fvSpan(t.claimed_at)}
+        ${doneAtSection}
+        ${evidenceSection}
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-label">연결 관계</div>
+      <div class="field-grid">
+        <div class="field-label">상위(Parent)</div>
+        <div class="field-value">${parentHtml}</div>
+        <div class="field-label">의존(Deps)</div>
+        <div class="field-value">${depsHtml}</div>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-label">Gate 조건 <span style="font-size:10px;color:#5a5d6a">(표시 전용)</span></div>
+      ${gateHtml}
+    </div>
+
+    <div class="section">
+      <div class="section-label">작업 로그</div>
+      ${logHtml}
+    </div>
+
+    ${t.notes ? `<div class="section">
+      <div class="section-label">메모</div>
+      <div class="desc-block">${esc(t.notes)}</div>
+    </div>` : ''}
+  `;
+}
+
+function renderMdContent(id, t) {
+  const mdText = S.mdMap[id];
+  if (!mdText) {
+    return `<div class="md-no-file">MD 파일이 로드되지 않았습니다.
+      <div class="reload-hint">상단 <strong>MD 파일 선택</strong> 버튼으로 tasks/ 폴더의 .md 파일들을 선택하세요.</div>
+    </div>
+    ${t.doc ? `<div style="margin-top:8px;font-size:12px;color:#5a5d6a">
+      문서 경로: ${esc(t.doc)}</div>` : ''}`;
+  }
+  return `<div class="md-content">${renderMd(mdText)}</div>`;
+}
+
+function switchTab(tab) {
+  S.activeTab = tab;
+  if (S.selectedId) renderDetail(S.selectedId);
+}
+
+// ── 간이 마크다운 렌더러 (XSS-safe) ────────────────────────────────────────
+function renderMd(text) {
+  const lines = text.split('\n');
+  let html = '';
+  let inPre = false;
+  let inUl = false;
+  let inOl = false;
+  let preContent = '';
+
+  const closeList = () => {
+    if (inUl) { html += '</ul>'; inUl = false; }
+    if (inOl) { html += '</ol>'; inOl = false; }
+  };
+
+  lines.forEach(line => {
+    if (line.startsWith('```')) {
+      if (inPre) {
+        html += `<pre><code>${esc(preContent.replace(/\n$/,''))}</code></pre>`;
+        preContent = ''; inPre = false;
+      } else {
+        closeList(); inPre = true;
+      }
+      return;
+    }
+    if (inPre) { preContent += line + '\n'; return; }
+
+    // 제목
+    const hm = line.match(/^(#{1,3})\s+(.+)/);
+    if (hm) {
+      closeList();
+      const level = hm[1].length;
+      html += `<h${level}>${inlineEsc(hm[2])}</h${level}>`;
+      return;
+    }
+    // 표 행
+    if (line.startsWith('|')) {
+      closeList();
+      const cells = line.split('|').slice(1,-1).map(c => c.trim());
+      if (cells.every(c => /^-+$/.test(c))) {
+        // 구분선 — 무시
+        return;
+      }
+      const tag = html.endsWith('</th>') || !html.endsWith('</tr>') ? 'th' : 'td';
+      html += `<tr>${cells.map(c=>`<${tag}>${inlineEsc(c)}</${tag}>`).join('')}</tr>`;
+      if (!html.includes('<table>') || !html.includes('<table')) {
+        // 간이 처리: 표 시작
+        html = html.replace(/(<tr>.+<\/tr>)(?!.*<\/table>)/s, '<table>$1');
+      }
+      return;
+    }
+
+    // 목록
+    const ulm = line.match(/^[\s]*[-*+]\s+(.*)/);
+    if (ulm) {
+      if (!inUl) { closeList(); html += '<ul>'; inUl = true; }
+      html += `<li>${inlineEsc(ulm[1])}</li>`;
+      return;
+    }
+    const olm = line.match(/^[\s]*\d+\.\s+(.*)/);
+    if (olm) {
+      if (!inOl) { closeList(); html += '<ol>'; inOl = true; }
+      html += `<li>${inlineEsc(olm[1])}</li>`;
+      return;
+    }
+    // 인용
+    if (line.startsWith('> ')) {
+      closeList();
+      html += `<blockquote>${inlineEsc(line.slice(2))}</blockquote>`;
+      return;
+    }
+    // 빈 줄
+    if (!line.trim()) {
+      closeList();
+      html += '<br>';
+      return;
+    }
+    // 일반 단락
+    closeList();
+    html += `<p>${inlineEsc(line)}</p>`;
+  });
+
+  closeList();
+  if (inPre) html += `<pre><code>${esc(preContent)}</code></pre>`;
+
+  // 표 닫기 보정
+  html = html.replace(/(<table>[\s\S]*?)(<\/tr>)(?![\s\S]*<\/table>)/g, '$1$2</table>');
+
+  return html;
+}
+
+function inlineEsc(s) {
+  // 이스케이프 후 인라인 스타일 적용 (bold, code)
+  let r = esc(s);
+  r = r.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+  r = r.replace(/`(.+?)`/g, '<code>$1</code>');
+  r = r.replace(/\[x\]/gi, '<span style="color:#4ade80">[x]</span>');
+  r = r.replace(/\[ \]/g, '<span style="color:#5a5d6a">[ ]</span>');
+  return r;
+}
+</script>
+</body>
+</html>

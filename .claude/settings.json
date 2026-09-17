@@ -1,0 +1,67 @@
+{
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Read",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python hooks/block_backlog_read.py",
+            "statusMessage": "Backlog 접근 확인 중..."
+          }
+        ]
+      },
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python hooks/git_safety.py",
+            "statusMessage": "Git 명령 보안 확인 중..."
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Write|Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python hooks/post_write.py",
+            "statusMessage": "코드 검사 및 Backlog 동기화 중...",
+            "timeout": 30
+          },
+          {
+            "type": "command",
+            "command": "python hooks/secrets_guard.py",
+            "statusMessage": "보안 인증 정보 검사 중..."
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python hooks/stop_check.py",
+            "statusMessage": "전체 코드 최종 검사 중...",
+            "timeout": 60
+          }
+        ]
+      }
+    ],
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python hooks/session_start.py",
+            "statusMessage": "브랜치 확인 중..."
+          }
+        ]
+      }
+    ]
+  }
+}
