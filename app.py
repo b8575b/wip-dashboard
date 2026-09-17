@@ -14,6 +14,7 @@ _DISPLAY_COLS = [
 def _reset_selection():
     st.session_state["selected_product"] = None
     st.session_state["selected_step"] = None
+    st.session_state["df_version"] = st.session_state.get("df_version", 0) + 1
 
 
 @st.dialog("Lot 상세정보", width="large")
@@ -70,6 +71,8 @@ if "selected_product" not in st.session_state:
     st.session_state["selected_product"] = None
 if "selected_step" not in st.session_state:
     st.session_state["selected_step"] = None
+if "df_version" not in st.session_state:
+    st.session_state["df_version"] = 0
 
 raw_df = fetch_wip_data()
 
@@ -135,7 +138,8 @@ else:
     matrix_styled = matrix.style.map(
         lambda v: "color: #cccccc;" if pd.notna(v) and v == 0 else ""
     )
-    df_key = str((sorted(sel_products), sorted(sel_steps), sorted(sel_statuses), hold_only))
+    df_key = str((sorted(sel_products), sorted(sel_steps), sorted(sel_statuses), hold_only,
+                  st.session_state.get("df_version", 0)))
     event = st.dataframe(
         matrix_styled,
         on_select="rerun",
