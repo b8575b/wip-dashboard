@@ -47,16 +47,11 @@ def _show_lot_dialog(product: str, step: str, lot_df: pd.DataFrame):
 
 st.set_page_config(
     page_title="WIP 재공 현황판",
-    page_icon="🏭",
+    page_icon=":material/factory:",
     layout="wide",
 )
 
-st.markdown(
-    "<style>footer { visibility: hidden; }</style>",
-    unsafe_allow_html=True,
-)
-
-st.title("WIP 재공 현황판")
+st.title(":material/factory: WIP 재공 현황판")
 st.caption("제품별·공정 STEP별 재공(WIP) 현황을 확인하고 Lot 상세정보를 조회합니다.")
 
 if "db_checked" not in st.session_state:
@@ -81,7 +76,7 @@ if "df_version" not in st.session_state:
 raw_df = fetch_wip_data()
 
 with st.sidebar:
-    st.header("필터")
+    st.header(":material/tune: 필터")
     if not raw_df.empty:
         all_products = sorted(raw_df["product_name"].dropna().unique().tolist())
         step_order_map = raw_df.groupby("step_name")["step_order"].min()
@@ -94,7 +89,7 @@ with st.sidebar:
     sel_steps = st.multiselect(
         "STEP", all_steps, default=all_steps, on_change=_reset_selection
     )
-    st.divider()
+    st.space("small")
     hold_only = st.checkbox("Hold Lot만 보기", value=False, on_change=_reset_selection)
     sel_statuses = st.multiselect(
         "Status", _ALL_STATUSES, default=_ALL_STATUSES,
@@ -126,18 +121,17 @@ else:
     qty_total = hold_count = long_wait = 0
 
 col1, col2, col3 = st.columns(3)
-col1.metric("전체 WIP", f"{qty_total:,}")
-col2.metric("Hold Lot", f"{hold_count}건")
-col3.metric("장시간 대기(24h+)", f"{long_wait}건")
-st.divider()
+col1.metric(":material/inventory_2: 전체 WIP", f"{qty_total:,}")
+col2.metric(":material/warning: Hold Lot", f"{hold_count}건")
+col3.metric(":material/schedule: 장시간 대기(24h+)", f"{long_wait}건")
 
-st.subheader("WIP Matrix")
+st.subheader(":material/grid_on: WIP Matrix")
 st.caption("셀을 클릭하여 Product와 STEP을 선택하면 Lot 상세정보를 조회합니다.")
 
 matrix = build_wip_matrix(filtered_df)
 
 if matrix.empty:
-    st.warning("표시할 WIP 데이터가 없습니다.")
+    st.warning("표시할 WIP 데이터가 없습니다.", icon=":material/info:")
 else:
     matrix_styled = matrix.style.map(
         lambda v: "color: #cccccc;" if pd.notna(v) and v == 0 else ""
