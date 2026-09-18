@@ -9,6 +9,16 @@ _DISPLAY_COLS = [
     "lot_id", "product_name", "step_name", "quantity",
     "equipment", "input_time", "waiting_hours", "status", "hold_yn",
 ]
+_HM_LIGHT = (219, 234, 254)  # #DBEAFE
+_HM_DARK = (30, 64, 175)     # #1E40AF
+
+
+def _heatmap_style(intensity: float) -> str:
+    r = int(_HM_LIGHT[0] + (_HM_DARK[0] - _HM_LIGHT[0]) * intensity)
+    g = int(_HM_LIGHT[1] + (_HM_DARK[1] - _HM_LIGHT[1]) * intensity)
+    b = int(_HM_LIGHT[2] + (_HM_DARK[2] - _HM_LIGHT[2]) * intensity)
+    text = "#ffffff" if intensity > 0.5 else "#1E3A8A"
+    return f"background-color: #{r:02x}{g:02x}{b:02x}; color: {text}; font-weight: 600;"
 
 
 def _reset_selection():
@@ -122,10 +132,10 @@ else:
         mask &= raw_df["status"].isin(sel_statuses)
     filtered_df = raw_df[mask]
 
-hit_pairs: set = set()
+hit_counts: pd.Series = pd.Series(dtype=int)
 if search_lot_ids and not filtered_df.empty and "lot_id" in filtered_df.columns:
     hit_df = filtered_df[filtered_df["lot_id"].isin(search_lot_ids)]
-    hit_pairs = set(zip(hit_df["product_name"], hit_df["step_name"]))
+    hit_counts = hit_df.groupby(["product_name", "step_name"]).size()
 
 if not filtered_df.empty:
     cols = set(filtered_df.columns)
@@ -147,7 +157,7 @@ st.caption("셀을 클릭하여 Product와 STEP을 선택하면 Lot 상세정보
 
 matrix = build_wip_matrix(filtered_df)
 
-if search_lot_ids and not hit_pairs:
+if search_lot_ids and hit_counts.empty:
     st.caption(":material/info: 검색한 Lot ID가 현재 필터 조건에 해당하는 데이터에 없습니다.")
 
 if matrix.empty:
@@ -156,11 +166,11 @@ else:
     def _style_matrix(df):
         styles = pd.DataFrame("", index=df.index, columns=df.columns)
         styles[df.map(lambda v: pd.notna(v) and v == 0)] = "color: #cccccc;"
-        for prod, step in hit_pairs:
-            if prod in df.index and step in df.columns:
-                styles.loc[prod, step] = (
-                    "background-color: #DBEAFE; color: #1E40AF; font-weight: 600;"
-                )
+        if not hit_counts.empty:
+            max_c = hit_counts.max()
+            for (prod, step), count in hit_counts.items():
+                if prod in df.index and step in df.columns:
+                    styles.loc[prod, step] = _heatmap_style(count / max_c)
         return styles
 
     matrix_styled = matrix.style.apply(_style_matrix, axis=None)
