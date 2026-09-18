@@ -96,14 +96,17 @@ with st.sidebar:
         disabled=hold_only, on_change=_reset_selection,
     )
     st.space("small")
-    all_lot_ids = (
-        sorted(raw_df["lot_id"].dropna().unique().tolist()) if not raw_df.empty else []
-    )
-    search_lot_ids = st.multiselect(
+    lot_input = st.text_area(
         ":material/search: Lot ID 검색",
-        all_lot_ids,
-        placeholder="Lot ID를 선택하세요",
+        placeholder="엑셀에서 복사 후 붙여넣기\n(여러 행 동시 입력 가능)",
+        height=120,
     )
+    search_lot_ids = {
+        token.strip()
+        for line in lot_input.splitlines()
+        for token in line.split("\t")
+        if token.strip()
+    }
 
 if raw_df.empty:
     filtered_df = pd.DataFrame()
