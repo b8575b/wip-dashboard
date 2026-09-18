@@ -95,6 +95,15 @@ with st.sidebar:
         "Status", _ALL_STATUSES, default=_ALL_STATUSES,
         disabled=hold_only, on_change=_reset_selection,
     )
+    st.space("small")
+    all_lot_ids = (
+        sorted(raw_df["lot_id"].dropna().unique().tolist()) if not raw_df.empty else []
+    )
+    search_lot_ids = st.multiselect(
+        ":material/search: Lot ID 검색",
+        all_lot_ids,
+        placeholder="Lot ID를 선택하세요",
+    )
 
 if raw_df.empty:
     filtered_df = pd.DataFrame()
@@ -109,6 +118,11 @@ else:
     elif sel_statuses:
         mask &= raw_df["status"].isin(sel_statuses)
     filtered_df = raw_df[mask]
+
+hit_pairs: set = set()
+if search_lot_ids and not filtered_df.empty and "lot_id" in filtered_df.columns:
+    hit_df = filtered_df[filtered_df["lot_id"].isin(search_lot_ids)]
+    hit_pairs = set(zip(hit_df["product_name"], hit_df["step_name"]))
 
 if not filtered_df.empty:
     cols = set(filtered_df.columns)
@@ -130,12 +144,23 @@ st.caption("셀을 클릭하여 Product와 STEP을 선택하면 Lot 상세정보
 
 matrix = build_wip_matrix(filtered_df)
 
+if search_lot_ids and not hit_pairs:
+    st.caption(":material/info: 검색한 Lot ID가 현재 필터 조건에 해당하는 데이터에 없습니다.")
+
 if matrix.empty:
     st.warning("표시할 WIP 데이터가 없습니다.", icon=":material/info:")
 else:
-    matrix_styled = matrix.style.map(
-        lambda v: "color: #cccccc;" if pd.notna(v) and v == 0 else ""
-    )
+    def _style_matrix(df):
+        styles = pd.DataFrame("", index=df.index, columns=df.columns)
+        styles[df.map(lambda v: pd.notna(v) and v == 0)] = "color: #cccccc;"
+        for prod, step in hit_pairs:
+            if prod in df.index and step in df.columns:
+                styles.loc[prod, step] = (
+                    "background-color: #DBEAFE; color: #1E40AF; font-weight: 600;"
+                )
+        return styles
+
+    matrix_styled = matrix.style.apply(_style_matrix, axis=None)
     df_key = str((sorted(sel_products), sorted(sel_steps), sorted(sel_statuses), hold_only,
                   st.session_state.get("df_version", 0)))
     event = st.dataframe(
